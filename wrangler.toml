@@ -1,0 +1,7 @@
+name = "survey-app"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "survey-db"
+database_id = "65177ce6-74fc-4bc9-90a9-980ae1af36d8"

@@ -1,0 +1,41 @@
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build artifacts
+dist
+
+# Development
+.vscode
+.idea
+
+# Docs and briefs
+docs/
+*.md
+!README.md
+
+# Git
+.git
+.gitignore
+
+# Environment
+.env
+.env.local
+.env.*.local
+.dev.vars
+
+# Wrangler
+.wrangler
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Testing
+coverage
+.nyc_output
