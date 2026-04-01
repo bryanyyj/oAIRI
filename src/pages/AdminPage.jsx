@@ -181,7 +181,7 @@ function AdminPage() {
     pct: questionAvgs ? ((questionAvgs[`q${i + 1}`] || 0) / 5) * 100 : 0
   })).sort((a, b) => a.avg - b.avg);
 
-  // Trend: fill missing days with 0
+  const CHART_PX = 96; // fixed chart height in px
   const trendMax = dailyTrend.length ? Math.max(...dailyTrend.map(d => d.count)) : 1;
 
   return (
@@ -286,24 +286,30 @@ function AdminPage() {
           {dailyTrend.length === 0 ? (
             <p className="text-gray-400 text-sm">No submissions in the last 30 days</p>
           ) : (
-            <div className="flex items-end gap-1 h-28">
-              {dailyTrend.map((d) => {
-                const heightPct = trendMax ? (d.count / trendMax) * 100 : 0;
-                return (
-                  <div key={d.date} className="flex-1 flex flex-col items-center gap-1 group relative">
-                    <div className="absolute -top-7 bg-gray-800 text-white text-xs px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10">
-                      {d.date}: {d.count}
+            <div className="overflow-x-auto">
+              <div className="flex items-end gap-1" style={{ height: `${CHART_PX + 20}px`, minWidth: `${dailyTrend.length * 24}px` }}>
+                {dailyTrend.map((d) => {
+                  const barH = Math.max(Math.round((d.count / trendMax) * CHART_PX), 4);
+                  return (
+                    <div key={d.date} className="flex-1 flex flex-col items-center group relative" style={{ minWidth: '20px' }}>
+                      {/* Tooltip */}
+                      <div className="absolute bg-gray-800 text-white text-xs px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none"
+                        style={{ bottom: `${barH + 6}px` }}>
+                        {d.date}: {d.count}
+                      </div>
+                      {/* Bar */}
+                      <div
+                        className="w-full bg-blue-500 hover:bg-blue-400 rounded-t transition-colors"
+                        style={{ height: `${barH}px` }}
+                      />
+                      {/* Label */}
+                      <span className="text-xs text-gray-400 mt-1 hidden sm:block" style={{ fontSize: '10px' }}>
+                        {d.date.slice(5)}
+                      </span>
                     </div>
-                    <div
-                      className="w-full bg-blue-500 rounded-t transition-all duration-300"
-                      style={{ height: `${heightPct}%` }}
-                    />
-                    <span className="text-xs text-gray-400 hidden sm:block">
-                      {d.date.slice(5)}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
