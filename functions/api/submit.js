@@ -101,8 +101,6 @@ export async function onRequestPost(context) {
   }
 
   try {
-    // Ensure table exists (for local development)
-    await ensureTableExists(env.DB);
     // Parse request body - expecting { answers: { 1: 'a', 2: 'b', ... } }
     const { answers } = await request.json();
 
