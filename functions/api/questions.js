@@ -15,7 +15,7 @@ export async function onRequestGet(context) {
 
   try {
     const { results: questions } = await env.DB.prepare(
-      'SELECT id, category, scenario, question, order_num FROM questions ORDER BY order_num ASC, id ASC'
+      'SELECT id, category, question, order_num FROM questions ORDER BY order_num ASC, id ASC'
     ).all();
 
     const { results: options } = await env.DB.prepare(

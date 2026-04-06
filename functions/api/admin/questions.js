@@ -45,19 +45,19 @@ export async function onRequestPost(context) {
   try {
     // ── Create ────────────────────────────────────────────────────
     if (action === 'create') {
-      const { category, scenario, question, options } = body;
+      const { category, question, options } = body;
 
-      if (!category || !scenario || !question || !Array.isArray(options) || options.length < 2) {
+      if (!category || !question || !Array.isArray(options) || options.length < 2) {
         return new Response(
-          JSON.stringify({ error: 'category, scenario, question, and at least 2 options are required' }),
+          JSON.stringify({ error: 'category, question, and at least 2 options are required' }),
           { status: 400, headers: corsHeaders }
         );
       }
 
       const { meta } = await env.DB.prepare(
-        `INSERT INTO questions (category, scenario, question, order_num)
-         VALUES (?, ?, ?, (SELECT COALESCE(MAX(order_num), 0) + 1 FROM questions))`
-      ).bind(category.trim(), scenario.trim(), question.trim()).run();
+        `INSERT INTO questions (category, question, order_num)
+         VALUES (?, ?, (SELECT COALESCE(MAX(order_num), 0) + 1 FROM questions))`
+      ).bind(category.trim(), question.trim()).run();
 
       const questionId = meta.last_row_id;
 
@@ -75,18 +75,18 @@ export async function onRequestPost(context) {
 
     // ── Update ────────────────────────────────────────────────────
     if (action === 'update') {
-      const { id, category, scenario, question, options } = body;
+      const { id, category, question, options } = body;
 
-      if (!id || !category || !scenario || !question || !Array.isArray(options) || options.length < 2) {
+      if (!id || !category || !question || !Array.isArray(options) || options.length < 2) {
         return new Response(
-          JSON.stringify({ error: 'id, category, scenario, question, and at least 2 options are required' }),
+          JSON.stringify({ error: 'id, category, question, and at least 2 options are required' }),
           { status: 400, headers: corsHeaders }
         );
       }
 
       await env.DB.prepare(
-        'UPDATE questions SET category=?, scenario=?, question=? WHERE id=?'
-      ).bind(category.trim(), scenario.trim(), question.trim(), id).run();
+        'UPDATE questions SET category=?, question=? WHERE id=?'
+      ).bind(category.trim(), question.trim(), id).run();
 
       await env.DB.prepare(
         'DELETE FROM question_options WHERE question_id=?'

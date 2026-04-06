@@ -1,13 +1,16 @@
--- Questions and options (editable from admin)
-CREATE TABLE IF NOT EXISTS questions (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  category   TEXT NOT NULL,
-  scenario   TEXT NOT NULL,
-  question   TEXT NOT NULL,
-  order_num  INTEGER NOT NULL DEFAULT 0
+-- Drop and recreate all tables cleanly
+DROP TABLE IF EXISTS question_options;
+DROP TABLE IF EXISTS questions;
+DROP TABLE IF EXISTS responses;
+
+CREATE TABLE questions (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  category  TEXT NOT NULL,
+  question  TEXT NOT NULL,
+  order_num INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE TABLE IF NOT EXISTS question_options (
+CREATE TABLE question_options (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   question_id INTEGER NOT NULL,
   text        TEXT NOT NULL,
@@ -15,8 +18,6 @@ CREATE TABLE IF NOT EXISTS question_options (
   FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
 );
 
--- Responses (answers_json replaces fixed q1-q20 columns)
-DROP TABLE IF EXISTS responses;
 CREATE TABLE responses (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,
   answers_json    TEXT NOT NULL,
@@ -26,31 +27,31 @@ CREATE TABLE responses (
   submitted_at    DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Seed questions (INSERT OR IGNORE = safe to re-run)
-INSERT OR IGNORE INTO questions (id, category, scenario, question, order_num) VALUES
-(1,  'Crisis Management',             'Your team discovers a critical security breach that has exposed customer data. The breach happened 2 hours ago, and customers are starting to notice unusual activity.',                                                                                                                'What is your immediate course of action?',          1),
-(2,  'Team Leadership',               'Two of your senior team members have a fundamental disagreement about the technical approach for a high-stakes project. The conflict is affecting team morale and the project deadline is in 3 weeks.',                                                                          'How do you handle this situation?',                 2),
-(3,  'Strategic Planning',            'Your company is considering adopting a new technology that could provide competitive advantage, but it requires significant investment and retraining of 60% of your team. Early adopters in the industry have had mixed results.',                                               'What approach do you recommend?',                   3),
-(4,  'Resource Management',           'You have a fixed budget and must choose between: hiring two junior developers to increase team capacity, or investing in training and tools for your existing team to improve efficiency.',                                                                                      'How do you allocate the budget?',                   4),
-(5,  'Stakeholder Communication',     'A major project you''re leading is going to miss its deadline by 3 weeks due to unexpected technical challenges. The client has already communicated this deadline to their stakeholders.',                                                                                     'How do you communicate this to the client?',        5),
-(6,  'Performance Management',        'A team member has been consistently missing deadlines and the quality of their work has declined over the past month. They were previously a strong performer.',                                                                                                               'What is your first step?',                          6),
-(7,  'Conflict Resolution',           'During a team meeting, two colleagues have a heated argument about project priorities. The tension is affecting the entire team''s ability to focus and collaborate.',                                                                                                         'How do you handle this situation in the moment?',   7),
-(8,  'Change Management',             'Your organization is implementing a major process change that will significantly alter how your team works. Several team members are resistant and expressing concerns about increased workload.',                                                                               'What is your approach to leading this change?',     8),
-(9,  'Decision Making',               'You need to choose between two vendor proposals for a critical system. One is cheaper but from an unknown vendor; the other is 40% more expensive but from a proven partner. You have incomplete information about both.',                                                      'How do you proceed with this decision?',            9),
-(10, 'Innovation',                    'A junior team member proposes an unconventional solution to a persistent problem. It''s creative but untested, and implementing it would require significant time and resources with uncertain outcomes.',                                                                      'How do you respond?',                               10),
-(11, 'Customer Relations',            'A long-term client is threatening to cancel their contract due to a service issue. The issue was caused by a limitation in your product that cannot be quickly resolved. They want an immediate solution or they will switch to a competitor.',                                 'What is your response strategy?',                   11),
-(12, 'Ethical Dilemma',               'You discover that a colleague has been inflating their performance metrics in reports to management. This has resulted in them receiving recognition and potentially affecting team resource allocation.',                                                                       'What do you do?',                                   12),
-(13, 'Time Management',               'You have three urgent tasks all due today: a critical bug fix, a presentation for executives, and a client deliverable. You can only complete two of them on time.',                                                                                                           'How do you prioritize?',                            13),
-(14, 'Quality vs Speed',              'Your team is behind schedule on a project. To meet the deadline, you could skip some testing and documentation, or you could maintain quality standards and request a deadline extension.',                                                                                    'What do you decide?',                               14),
-(15, 'Delegation & Trust',            'A critical project component needs to be completed, and a capable team member has asked to lead it. However, you are concerned about the high stakes and are tempted to do it yourself to ensure it is done right.',                                                           'What do you do?',                                   15),
-(16, 'Learning & Development',        'You realize your technical skills in an emerging area are becoming outdated, and this is affecting your ability to contribute to strategic discussions. You have limited time due to current work commitments.',                                                                'How do you address this skills gap?',               16),
-(17, 'Feedback & Communication',      'You receive critical feedback from your manager about your leadership style. The feedback is difficult to hear and you partially disagree with their assessment.',                                                                                                             'How do you respond?',                               17),
-(18, 'Cross-Functional Collaboration','A project requires close collaboration with another department that has different priorities and timelines. Initial meetings have been unproductive, with both teams talking past each other.',                                                                                 'What is your strategy to move forward?',            18),
-(19, 'Risk Management',               'During project planning, you identify a significant technical risk that could derail the project. Acknowledging it may make stakeholders lose confidence, but not addressing it could lead to failure later.',                                                                 'How do you handle this risk?',                      19),
-(20, 'Organizational Politics',       'You are aware of an organizational change that will significantly impact your team, but you have been asked by leadership to keep it confidential until the official announcement next month. Your team is making decisions based on outdated assumptions.',                   'What do you do?',                                   20);
+-- Seed questions
+INSERT INTO questions (id, category, question, order_num) VALUES
+(1,  'Crisis Management',             'Your team discovers a critical security breach that has exposed customer data. The breach happened 2 hours ago and customers are starting to notice unusual activity. What is your immediate course of action?',                                                                                    1),
+(2,  'Team Leadership',               'Two of your senior team members have a fundamental disagreement about the technical approach for a high-stakes project. The conflict is affecting team morale and the deadline is in 3 weeks. How do you handle this?',                                                                          2),
+(3,  'Strategic Planning',            'Your company is considering adopting a new technology that could provide competitive advantage, but it requires significant investment and retraining of 60% of your team. Early adopters have had mixed results. What approach do you recommend?',                                               3),
+(4,  'Resource Management',           'You have a fixed budget and must choose between hiring two junior developers to increase capacity, or investing in training and tools for your existing team to improve efficiency. How do you allocate the budget?',                                                                           4),
+(5,  'Stakeholder Communication',     'A major project you are leading will miss its deadline by 3 weeks due to unexpected technical challenges. The client has already communicated this deadline to their stakeholders. How do you communicate this?',                                                                               5),
+(6,  'Performance Management',        'A team member has been consistently missing deadlines and the quality of their work has declined over the past month. They were previously a strong performer. What is your first step?',                                                                                                      6),
+(7,  'Conflict Resolution',           'During a team meeting, two colleagues have a heated argument about project priorities. The tension is affecting the entire team''s ability to focus and collaborate. How do you handle this in the moment?',                                                                                   7),
+(8,  'Change Management',             'Your organization is implementing a major process change that will significantly alter how your team works. Several team members are resistant and expressing concerns about increased workload. What is your approach to leading this change?',                                                  8),
+(9,  'Decision Making',               'You need to choose between two vendor proposals for a critical system. One is cheaper but from an unknown vendor; the other is 40% more expensive but from a proven partner. You have incomplete information about both. How do you proceed?',                                                  9),
+(10, 'Innovation',                    'A junior team member proposes an unconventional solution to a persistent problem. It is creative but untested, and implementing it would require significant time and resources with uncertain outcomes. How do you respond?',                                                                  10),
+(11, 'Customer Relations',            'A long-term client is threatening to cancel their contract due to a service issue caused by a product limitation that cannot be quickly resolved. They want an immediate solution or will switch to a competitor. What is your response strategy?',                                            11),
+(12, 'Ethical Dilemma',               'You discover that a colleague has been inflating their performance metrics in reports to management, resulting in them receiving recognition and affecting team resource allocation. What do you do?',                                                                                         12),
+(13, 'Time Management',               'You have three urgent tasks all due today: a critical bug fix, a presentation for executives, and a client deliverable. You can only complete two of them on time. How do you prioritize?',                                                                                                    13),
+(14, 'Quality vs Speed',              'Your team is behind schedule. To meet the deadline you could skip some testing and documentation, or you could maintain quality standards and request a deadline extension. What do you decide?',                                                                                             14),
+(15, 'Delegation & Trust',            'A critical project component needs to be completed and a capable team member has asked to lead it. However, you are concerned about the high stakes and are tempted to do it yourself to ensure it is done right. What do you do?',                                                           15),
+(16, 'Learning & Development',        'You realize your technical skills in an emerging area are becoming outdated, affecting your ability to contribute to strategic discussions. You have limited time due to current work commitments. How do you address this skills gap?',                                                        16),
+(17, 'Feedback & Communication',      'You receive critical feedback from your manager about your leadership style. The feedback is difficult to hear and you partially disagree with their assessment. How do you respond?',                                                                                                        17),
+(18, 'Cross-Functional Collaboration','A project requires close collaboration with another department that has different priorities and timelines. Initial meetings have been unproductive with both teams talking past each other. What is your strategy to move forward?',                                                          18),
+(19, 'Risk Management',               'During project planning you identify a significant technical risk that could derail the project. Acknowledging it may make stakeholders lose confidence, but not addressing it could lead to failure later. How do you handle this?',                                                         19),
+(20, 'Organizational Politics',       'You are aware of an organizational change that will significantly impact your team, but have been asked by leadership to keep it confidential until the official announcement next month. Your team is making decisions based on outdated assumptions. What do you do?',                       20);
 
 -- Seed options ordered by weight ASC per question
-INSERT OR IGNORE INTO question_options (id, question_id, text, weight) VALUES
+INSERT INTO question_options (id, question_id, text, weight) VALUES
 -- Q1 Crisis Management
 (1,  1, 'Wait to gather all facts before taking any action to avoid spreading misinformation', 1),
 (2,  1, 'Shut down all systems immediately to prevent further damage, then investigate', 2),
@@ -58,7 +59,7 @@ INSERT OR IGNORE INTO question_options (id, question_id, text, weight) VALUES
 (4,  1, 'Contact legal and PR teams first, then follow their guidance on next steps', 4),
 (5,  1, 'Assemble incident response team, contain the breach, assess impact, then communicate with stakeholders following protocol', 5),
 -- Q2 Team Leadership
-(6,  2, 'Let them work it out themselves since they''re senior team members', 1),
+(6,  2, 'Let them work it out themselves since they are senior team members', 1),
 (7,  2, 'Make an executive decision on which approach to use and direct the team to follow it', 2),
 (8,  2, 'Compromise by combining elements from both approaches', 3),
 (9,  2, 'Escalate to your manager or bring in an external technical expert to decide', 4),
@@ -86,7 +87,7 @@ INSERT OR IGNORE INTO question_options (id, question_id, text, weight) VALUES
 (27, 6, 'Reassign their critical tasks to other team members to ensure project success', 2),
 (28, 6, 'Document the performance issues and schedule a formal performance improvement plan meeting', 3),
 (29, 6, 'Send them an email outlining your concerns and asking for improvement', 4),
-(30, 6, 'Have a private, supportive conversation to understand what''s changed and identify any obstacles or personal challenges', 5),
+(30, 6, 'Have a private, supportive conversation to understand what changed and identify any obstacles or personal challenges', 5),
 -- Q7 Conflict Resolution
 (31, 7, 'Let them finish the discussion, then move on to the next agenda item', 1),
 (32, 7, 'Ask both parties to present their cases to the team and vote on the best approach', 2),
@@ -121,7 +122,7 @@ INSERT OR IGNORE INTO question_options (id, question_id, text, weight) VALUES
 (56, 12, 'Ignore it as it is not your responsibility to monitor others', 1),
 (57, 12, 'Mention it casually to your manager and let them decide what to do', 2),
 (58, 12, 'Immediately report the colleague to HR and their manager', 3),
-(59, 12, 'Anonymously report the discrepancies through the company''s ethics hotline', 4),
+(59, 12, 'Anonymously report the discrepancies through the ethics hotline', 4),
 (60, 12, 'Speak privately with the colleague first to understand the situation and encourage them to correct it, then escalate to management if needed', 5),
 -- Q13 Time Management
 (61, 13, 'Work on whichever task you feel most confident completing', 1),
@@ -162,7 +163,7 @@ INSERT OR IGNORE INTO question_options (id, question_id, text, weight) VALUES
 -- Q19 Risk Management
 (91, 19, 'Do not mention it now and hope you can solve it as you go', 1),
 (92, 19, 'Mention the risk briefly but downplay its significance', 2),
-(93, 19, 'Work on solving the risk before bringing it to stakeholders'' attention', 3),
+(93, 19, 'Work on solving the risk before bringing it to stakeholders attention', 3),
 (94, 19, 'Present the risk and ask stakeholders whether to proceed or cancel the project', 4),
 (95, 19, 'Present the risk transparently with probability and impact assessment, propose mitigation strategies, include contingency plans, and adjust timeline/budget accordingly', 5),
 -- Q20 Organizational Politics

@@ -32,7 +32,7 @@ function StatCard({ label, value, sub, color }) {
 
 // ── Question editor form ─────────────────────────────────────────────────────
 function QuestionForm({ initial, onSave, onCancel }) {
-  const empty = { category: '', scenario: '', question: '', options: [{ text: '', weight: 1 }, { text: '', weight: 2 }] };
+  const empty = { category: '', question: '', options: [{ text: '', weight: 1 }, { text: '', weight: 2 }] };
   const [form, setForm] = useState(initial || empty);
 
   const setField = (field, value) => setForm(f => ({ ...f, [field]: value }));
@@ -41,7 +41,7 @@ function QuestionForm({ initial, onSave, onCancel }) {
   const addOption = () => setForm(f => ({ ...f, options: [...f.options, { text: '', weight: f.options.length + 1 }] }));
   const removeOption = (i) => setForm(f => ({ ...f, options: f.options.filter((_, idx) => idx !== i) }));
 
-  const valid = form.category.trim() && form.scenario.trim() && form.question.trim() &&
+  const valid = form.category.trim() && form.question.trim() &&
     form.options.length >= 2 && form.options.every(o => o.text.trim() && o.weight > 0);
 
   return (
@@ -57,25 +57,14 @@ function QuestionForm({ initial, onSave, onCancel }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">Question prompt</label>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Question</label>
           <input
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={form.question}
             onChange={e => setField('question', e.target.value)}
-            placeholder="e.g. What is your immediate course of action?"
+            placeholder="e.g. You discover a security breach. What do you do first?"
           />
         </div>
-      </div>
-
-      <div>
-        <label className="block text-xs font-semibold text-gray-600 mb-1">Scenario description</label>
-        <textarea
-          rows={3}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          value={form.scenario}
-          onChange={e => setField('scenario', e.target.value)}
-          placeholder="Describe the scenario the respondent will face..."
-        />
       </div>
 
       <div>
@@ -564,7 +553,7 @@ function AdminPage() {
                   <div className="p-6">
                     <h3 className="text-base font-bold text-gray-900 mb-4">Editing: {q.category}</h3>
                     <QuestionForm
-                      initial={{ category: q.category, scenario: q.scenario, question: q.question, options: q.options.map(o => ({ text: o.text, weight: o.weight })) }}
+                      initial={{ category: q.category, question: q.question, options: q.options.map(o => ({ text: o.text, weight: o.weight })) }}
                       onSave={form => questionAction('update', { id: q.id, ...form })}
                       onCancel={() => setEditingId(null)}
                     />
@@ -577,8 +566,7 @@ function AdminPage() {
                           <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">{q.category}</span>
                           <span className="text-xs text-gray-400">Q{idx + 1} · {q.options.length} options</span>
                         </div>
-                        <p className="text-sm text-gray-700 leading-snug line-clamp-2">{q.scenario}</p>
-                        <p className="text-xs text-gray-500 mt-1 italic">{q.question}</p>
+                        <p className="text-sm text-gray-700 leading-snug line-clamp-2">{q.question}</p>
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
                         <button
