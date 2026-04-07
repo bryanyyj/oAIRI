@@ -1,30 +1,36 @@
-// Protected Admin API to view all responses and questions
+import { verifyToken, logSecurityEvent, corsHeaders } from '../_lib/auth.js';
+
 export async function onRequestGet(context) {
   const { request, env } = context;
-
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Content-Type': 'application/json'
-  };
+  const cors = corsHeaders(request, true);
+  const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
 
   if (request.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: cors });
   }
 
-  try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return new Response(JSON.stringify({ error: 'Unauthorized - No token provided' }), { status: 401, headers: corsHeaders });
-    }
-    try {
-      if (!atob(token).startsWith('admin:')) throw new Error();
-    } catch {
-      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid token' }), { status: 401, headers: corsHeaders });
-    }
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+  if (!token) {
+    logSecurityEvent('ADMIN_ACCESS_DENIED', { ip, reason: 'no token' });
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: cors });
+  }
 
-    // Overall stats
+  const ADMIN_PASSWORD = env.ADMIN_PASSWORD;
+  if (!ADMIN_PASSWORD) {
+    return new Response(JSON.stringify({ error: 'Server misconfiguration' }), { status: 500, headers: cors });
+  }
+
+  const valid = await verifyToken(token, ADMIN_PASSWORD);
+  if (!valid) {
+    logSecurityEvent('ADMIN_ACCESS_DENIED', { ip, reason: 'invalid or expired token' });
+    return new Response(JSON.stringify({ error: 'Unauthorized - invalid or expired token' }), { status: 401, headers: cors });
+  }
+
+  logSecurityEvent('ADMIN_ACCESS', { ip });
+
+  // ── Queries ───────────────────────────────────────────────────────────────
+  try {
     const stats = await env.DB.prepare(`
       SELECT
         COUNT(*) as total_responses,
@@ -39,7 +45,6 @@ export async function onRequestGet(context) {
       FROM responses
     `).first();
 
-    // Score distribution buckets (percentage-based)
     const { results: scoreBuckets } = await env.DB.prepare(`
       SELECT
         CASE
@@ -55,7 +60,6 @@ export async function onRequestGet(context) {
       ORDER BY bucket DESC
     `).all();
 
-    // Submissions per day (last 30 days)
     const { results: dailyTrend } = await env.DB.prepare(`
       SELECT DATE(submitted_at) as date, COUNT(*) as count
       FROM responses
@@ -64,12 +68,10 @@ export async function onRequestGet(context) {
       ORDER BY date ASC
     `).all();
 
-    // All responses
     const { results: responses } = await env.DB.prepare(
       'SELECT id, readiness_level, total_score, score_pct, answers_json, submitted_at FROM responses ORDER BY submitted_at DESC'
     ).all();
 
-    // Questions with options (for admin page question management + per-question analytics)
     const { results: questions } = await env.DB.prepare(
       'SELECT id, category, question, order_num FROM questions ORDER BY order_num ASC, id ASC'
     ).all();
@@ -87,14 +89,14 @@ export async function onRequestGet(context) {
 
     return new Response(
       JSON.stringify({ success: true, stats, scoreBuckets, dailyTrend, responses, questions: questionsWithOptions }, null, 2),
-      { status: 200, headers: corsHeaders }
+      { status: 200, headers: cors }
     );
 
   } catch (error) {
-    console.error('Error fetching admin data:', error);
+    logSecurityEvent('ADMIN_ERROR', { ip, error: error.message });
     return new Response(
       JSON.stringify({ error: 'Failed to fetch data', details: error.message }),
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: cors }
     );
   }
 }
