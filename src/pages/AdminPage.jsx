@@ -31,15 +31,29 @@ function StatCard({ label, value, sub, color }) {
 }
 
 // ── Question editor form ─────────────────────────────────────────────────────
-function QuestionForm({ initial, onSave, onCancel }) {
-  const empty = { category: '', question: '', options: [{ text: '', weight: 1 }, { text: '', weight: 2 }] };
+function QuestionForm({ initial, onSave, onCancel, existingCategories = [] }) {
+  const empty = { category: '', question: '', options: [{ text: '', weight: 1.00 }, { text: '', weight: 2.00 }] };
   const [form, setForm] = useState(initial || empty);
+  // If the initial category isn't in the existing list, treat it as a custom new one
+  const [isNewCategory, setIsNewCategory] = useState(
+    initial ? !existingCategories.includes(initial.category) : false
+  );
 
   const setField = (field, value) => setForm(f => ({ ...f, [field]: value }));
   const setOption = (i, field, value) =>
     setForm(f => ({ ...f, options: f.options.map((o, idx) => idx === i ? { ...o, [field]: value } : o) }));
-  const addOption = () => setForm(f => ({ ...f, options: [...f.options, { text: '', weight: f.options.length + 1 }] }));
+  const addOption = () => setForm(f => ({ ...f, options: [...f.options, { text: '', weight: 1.00 }] }));
   const removeOption = (i) => setForm(f => ({ ...f, options: f.options.filter((_, idx) => idx !== i) }));
+
+  const handleCategorySelect = (val) => {
+    if (val === '__new__') {
+      setIsNewCategory(true);
+      setField('category', '');
+    } else {
+      setIsNewCategory(false);
+      setField('category', val);
+    }
+  };
 
   const valid = form.category.trim() && form.question.trim() &&
     form.options.length >= 2 && form.options.every(o => o.text.trim() && o.weight > 0);
@@ -48,28 +62,43 @@ function QuestionForm({ initial, onSave, onCancel }) {
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-gray-600 mb-1">Category</label>
-          <input
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            value={form.category}
-            onChange={e => setField('category', e.target.value)}
-            placeholder="e.g. Crisis Management"
-          />
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Pillar</label>
+          <select
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            value={isNewCategory ? '__new__' : form.category}
+            onChange={e => handleCategorySelect(e.target.value)}
+          >
+            <option value="">Select pillar…</option>
+            {existingCategories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+            <option value="__new__">＋ New pillar…</option>
+          </select>
+          {isNewCategory && (
+            <input
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-2"
+              value={form.category}
+              onChange={e => setField('category', e.target.value)}
+              placeholder="Enter new pillar name"
+              autoFocus
+            />
+          )}
         </div>
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1">Question</label>
-          <input
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          <textarea
+            rows={3}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             value={form.question}
             onChange={e => setField('question', e.target.value)}
-            placeholder="e.g. You discover a security breach. What do you do first?"
+            placeholder="Enter the question text…"
           />
         </div>
       </div>
 
       <div>
         <div className="flex justify-between items-center mb-2">
-          <label className="text-xs font-semibold text-gray-600">Options (ordered by weight on the survey)</label>
+          <label className="text-xs font-semibold text-gray-600">Options (ordered lowest → highest weight on the survey)</label>
           <button
             type="button"
             onClick={addOption}
@@ -92,10 +121,12 @@ function QuestionForm({ initial, onSave, onCancel }) {
               <div className="w-24 flex-shrink-0">
                 <input
                   type="number"
-                  min="1"
+                  min="1.00"
+                  max="2.00"
+                  step="0.25"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={opt.weight}
-                  onChange={e => setOption(i, 'weight', parseInt(e.target.value) || 1)}
+                  onChange={e => setOption(i, 'weight', parseFloat(e.target.value) || 1.00)}
                   placeholder="Weight"
                 />
               </div>
@@ -112,7 +143,7 @@ function QuestionForm({ initial, onSave, onCancel }) {
             </div>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-1">Weight 1 = lowest score, higher = better. Options display lowest → highest on the survey.</p>
+        <p className="text-xs text-gray-400 mt-1">Weight 1.00 = lowest score, 2.00 = highest. Use steps of 0.25.</p>
       </div>
 
       <div className="flex gap-2 pt-1">
@@ -151,7 +182,8 @@ function AdminPage() {
   const [activeTab, setActiveTab] = useState('analytics');
 
   // Question management state
-  const [editingId, setEditingId] = useState(null);   // question id being edited
+  const [editingId, setEditingId] = useState(null);       // question id being edited
+  const [addFormCategory, setAddFormCategory] = useState(''); // pre-filled pillar for new question
   const [showAddForm, setShowAddForm] = useState(false);
   const [qSaving, setQSaving] = useState(false);
 
@@ -202,7 +234,9 @@ function AdminPage() {
       });
       const result = await res.json();
       if (!result.success) throw new Error(result.error);
-      setEditingId(null); setShowAddForm(false);
+      setEditingId(null);
+      setShowAddForm(false);
+      setAddFormCategory('');
       await fetchData(localStorage.getItem('adminToken'));
     } catch (err) { alert(`Failed: ${err.message}`); }
     finally { setQSaving(false); }
@@ -520,83 +554,129 @@ function AdminPage() {
         )}
 
         {/* ── Questions Tab ─────────────────────────────────────────────── */}
-        {activeTab === 'questions' && (
-          <div className="space-y-4">
-            {!showAddForm && (
-              <div className="flex justify-end">
-                <button
-                  onClick={() => { setShowAddForm(true); setEditingId(null); }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg transition-colors text-sm"
-                >
-                  + Add Question
-                </button>
-              </div>
-            )}
+        {activeTab === 'questions' && (() => {
+          // Group questions by pillar, preserving order of first appearance
+          const pillarMap = new Map();
+          for (const q of questions) {
+            if (!pillarMap.has(q.category)) pillarMap.set(q.category, []);
+            pillarMap.get(q.category).push(q);
+          }
+          const pillarGroups = Array.from(pillarMap.entries()); // [[name, [q,...]], ...]
+          const existingCategories = Array.from(pillarMap.keys());
 
-            {showAddForm && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-200">
-                <h3 className="text-base font-bold text-gray-900 mb-4">New Question</h3>
-                <QuestionForm
-                  onSave={form => questionAction('create', form)}
-                  onCancel={() => setShowAddForm(false)}
-                />
-              </div>
-            )}
+          const openAddForm = (category = '') => {
+            setAddFormCategory(category);
+            setShowAddForm(true);
+            setEditingId(null);
+          };
+          const closeAddForm = () => { setShowAddForm(false); setAddFormCategory(''); };
 
-            {questions.length === 0 && !showAddForm && (
-              <div className="text-center py-16 text-gray-400">No questions yet. Add one to get started.</div>
-            )}
+          return (
+            <div className="space-y-6">
+              {/* Global add button */}
+              {!showAddForm && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => openAddForm()}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg transition-colors text-sm"
+                  >
+                    + Add Question
+                  </button>
+                </div>
+              )}
 
-            {questions.map((q, idx) => (
-              <div key={q.id} className={`bg-white rounded-xl shadow-sm border ${editingId === q.id ? 'border-blue-300' : 'border-gray-100'} overflow-hidden`}>
-                {editingId === q.id ? (
-                  <div className="p-6">
-                    <h3 className="text-base font-bold text-gray-900 mb-4">Editing: {q.category}</h3>
-                    <QuestionForm
-                      initial={{ category: q.category, question: q.question, options: q.options.map(o => ({ text: o.text, weight: o.weight })) }}
-                      onSave={form => questionAction('update', { id: q.id, ...form })}
-                      onCancel={() => setEditingId(null)}
-                    />
-                  </div>
-                ) : (
-                  <div className="p-5">
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">{q.category}</span>
-                          <span className="text-xs text-gray-400">Q{idx + 1} · {q.options.length} options</span>
-                        </div>
-                        <p className="text-sm text-gray-700 leading-snug line-clamp-2">{q.question}</p>
-                      </div>
-                      <div className="flex gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => { setEditingId(q.id); setShowAddForm(false); }}
-                          className="text-xs text-blue-600 hover:underline font-medium"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => { if (window.confirm(`Delete "${q.category}"? This cannot be undone.`)) questionAction('delete', { id: q.id }); }}
-                          className="text-xs text-red-500 hover:underline font-medium"
-                          disabled={qSaving}
-                        >
-                          Delete
-                        </button>
-                      </div>
+              {/* Add form (global or pre-filled) */}
+              {showAddForm && (
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-200">
+                  <h3 className="text-base font-bold text-gray-900 mb-4">New Question</h3>
+                  <QuestionForm
+                    initial={addFormCategory ? { category: addFormCategory, question: '', options: [{ text: '', weight: 1.00 }, { text: '', weight: 2.00 }] } : undefined}
+                    existingCategories={existingCategories}
+                    onSave={form => questionAction('create', form)}
+                    onCancel={closeAddForm}
+                  />
+                </div>
+              )}
+
+              {questions.length === 0 && !showAddForm && (
+                <div className="text-center py-16 text-gray-400">No questions yet. Click "+ Add Question" to get started.</div>
+              )}
+
+              {/* Pillar sections */}
+              {pillarGroups.map(([pillarName, pillarQs], pillarIdx) => (
+                <div key={pillarName} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  {/* Pillar header */}
+                  <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <span className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                        {pillarIdx + 1}
+                      </span>
+                      <span className="font-bold text-gray-800 text-sm">{pillarName}</span>
+                      <span className="text-xs text-gray-400">{pillarQs.length} question{pillarQs.length !== 1 ? 's' : ''}</span>
                     </div>
-                    <div className="mt-3 flex flex-wrap gap-1">
-                      {q.options.map(opt => (
-                        <span key={opt.id} className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-0.5">
-                          w{opt.weight}: {opt.text.slice(0, 40)}{opt.text.length > 40 ? '…' : ''}
-                        </span>
-                      ))}
-                    </div>
+                    {!showAddForm && (
+                      <button
+                        onClick={() => openAddForm(pillarName)}
+                        className="text-xs text-blue-600 hover:underline font-semibold"
+                      >
+                        + Add to this pillar
+                      </button>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+
+                  {/* Questions in this pillar */}
+                  <div className="divide-y divide-gray-50">
+                    {pillarQs.map((q, qIdx) => (
+                      <div key={q.id} className={editingId === q.id ? 'border-l-4 border-blue-400' : ''}>
+                        {editingId === q.id ? (
+                          <div className="p-5">
+                            <QuestionForm
+                              initial={{ category: q.category, question: q.question, options: q.options.map(o => ({ text: o.text, weight: o.weight })) }}
+                              existingCategories={existingCategories}
+                              onSave={form => questionAction('update', { id: q.id, ...form })}
+                              onCancel={() => setEditingId(null)}
+                            />
+                          </div>
+                        ) : (
+                          <div className="px-5 py-4">
+                            <div className="flex justify-between items-start gap-4">
+                              <div className="flex-1 min-w-0">
+                                <span className="text-xs text-gray-400 font-medium">Q{qIdx + 1} · {q.options.length} options</span>
+                                <p className="text-sm text-gray-800 leading-snug mt-0.5">{q.question}</p>
+                              </div>
+                              <div className="flex gap-3 flex-shrink-0 pt-0.5">
+                                <button
+                                  onClick={() => { setEditingId(q.id); closeAddForm(); }}
+                                  className="text-xs text-blue-600 hover:underline font-medium"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => { if (window.confirm(`Delete this question? This cannot be undone.`)) questionAction('delete', { id: q.id }); }}
+                                  className="text-xs text-red-500 hover:underline font-medium"
+                                  disabled={qSaving}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {q.options.map(opt => (
+                                <span key={opt.id} className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-0.5">
+                                  {opt.weight}: {opt.text.slice(0, 45)}{opt.text.length > 45 ? '…' : ''}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
 
       </div>
     </div>

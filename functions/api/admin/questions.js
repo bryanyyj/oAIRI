@@ -58,7 +58,7 @@ export async function onRequestPost(context) {
       for (const opt of options) {
         await env.DB.prepare(
           'INSERT INTO question_options (question_id, text, weight) VALUES (?, ?, ?)'
-        ).bind(questionId, opt.text.trim(), parseInt(opt.weight)).run();
+        ).bind(questionId, opt.text.trim(), parseFloat(opt.weight)).run();
       }
 
       logSecurityEvent('ADMIN_QUESTION_CREATED', { ip, questionId });
