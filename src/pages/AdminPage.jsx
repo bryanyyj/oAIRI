@@ -615,12 +615,24 @@ function AdminPage() {
                       <span className="text-xs text-gray-400">{pillarQs.length} question{pillarQs.length !== 1 ? 's' : ''}</span>
                     </div>
                     {!showAddForm && (
-                      <button
-                        onClick={() => openAddForm(pillarName)}
-                        className="text-xs text-blue-600 hover:underline font-semibold"
-                      >
-                        + Add to this pillar
-                      </button>
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => openAddForm(pillarName)}
+                          className="text-xs text-blue-600 hover:underline font-semibold"
+                        >
+                          + Add to this pillar
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Delete the entire "${pillarName}" pillar and all ${pillarQs.length} question${pillarQs.length !== 1 ? 's' : ''} in it? This cannot be undone.`))
+                              questionAction('delete_pillar', { category: pillarName });
+                          }}
+                          className="text-xs text-red-500 hover:underline font-semibold"
+                          disabled={qSaving}
+                        >
+                          Delete pillar
+                        </button>
+                      </div>
                     )}
                   </div>
 

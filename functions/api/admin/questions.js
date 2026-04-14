@@ -105,6 +105,26 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ success: true }), { status: 200, headers: cors });
     }
 
+    // ── Delete pillar (all questions in a category) ─────────────────────────
+    if (action === 'delete_pillar') {
+      const { category } = body;
+      if (!category) {
+        return new Response(JSON.stringify({ error: 'category is required' }), { status: 400, headers: cors });
+      }
+
+      const { results: qs } = await env.DB.prepare(
+        'SELECT id FROM questions WHERE category=?'
+      ).bind(category).all();
+
+      for (const q of qs) {
+        await env.DB.prepare('DELETE FROM question_options WHERE question_id=?').bind(q.id).run();
+      }
+      await env.DB.prepare('DELETE FROM questions WHERE category=?').bind(category).run();
+
+      logSecurityEvent('ADMIN_PILLAR_DELETED', { ip, category, count: qs.length });
+      return new Response(JSON.stringify({ success: true, deleted: qs.length }), { status: 200, headers: cors });
+    }
+
     return new Response(
       JSON.stringify({ error: `Unknown action: ${action}` }),
       { status: 400, headers: cors }
