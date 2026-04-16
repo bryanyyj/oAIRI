@@ -45,9 +45,17 @@ function ResultsPage() {
   const { label, description, color, pillarScores, overallMean } = readinessData;
   const styles = LEVEL_STYLES[color] || LEVEL_STYLES.yellow;
 
-  const radarPillars = pillarScores
-    ? Object.entries(pillarScores).map(([name, { pct }]) => ({ name, pct }))
-    : [];
+  const pillarEntries = pillarScores ? Object.entries(pillarScores) : [];
+  const radarPillars  = pillarEntries.map(([name, { pct }]) => ({ name, pct: pct ?? 0 }));
+
+  // Simple level lookup used for per-pillar badges (mirrors server logic)
+  function levelFromScore(score) {
+    if (score >= 4) return { label: 'Expert Ready',     color: 'emerald' };
+    if (score >= 3) return { label: 'Advanced Ready',   color: 'green'   };
+    if (score >= 2) return { label: 'Moderately Ready', color: 'yellow'  };
+    if (score >= 1) return { label: 'Developing',       color: 'orange'  };
+    return           { label: 'Novice',                 color: 'red'     };
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-10 px-4 sm:px-6 lg:px-8">
@@ -67,28 +75,45 @@ function ResultsPage() {
           <p className="text-gray-600 text-base max-w-xl mx-auto">{description}</p>
         </div>
 
-        {/* ── Radar + Pillar Breakdown ─────────────────────────────── */}
+        {/* ── Radar chart ──────────────────────────────────────────── */}
         {radarPillars.length >= 3 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4 text-center">Competency Profile</p>
-            <div className="flex justify-center mb-6">
-              <RadarChart pillars={radarPillars} size={280} />
-            </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center">
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">Competency Profile</p>
+            <RadarChart pillars={radarPillars} size={280} />
+          </div>
+        )}
 
-            {/* Per-pillar scores */}
+        {/* ── Pillar breakdown ─────────────────────────────────────── */}
+        {pillarEntries.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-4">Score by Pillar</p>
             <div className="space-y-3">
-              {Object.entries(pillarScores).map(([pillar, { avg, level }]) => {
+              {pillarEntries.map(([pillar, { avg }]) => {
+                const level = levelFromScore(avg ?? 0);
                 const s = LEVEL_STYLES[level.color] || LEVEL_STYLES.yellow;
                 return (
                   <div key={pillar} className="flex items-center gap-3">
                     <span className="text-sm text-gray-700 flex-1 font-medium">{pillar}</span>
-                    <span className="text-sm font-bold text-gray-900 tabular-nums">{avg.toFixed(2)}<span className="text-xs font-normal text-gray-400"> / 5</span></span>
+                    <span className="text-sm font-bold text-gray-900 tabular-nums w-14 text-right">
+                      {(avg ?? 0).toFixed(2)}<span className="text-xs font-normal text-gray-400"> / 5</span>
+                    </span>
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${s.badge} w-32 text-center flex-shrink-0`}>
                       {level.label}
                     </span>
                   </div>
                 );
               })}
+
+              {/* Overall row */}
+              <div className="border-t border-gray-100 pt-3 flex items-center gap-3">
+                <span className="text-sm font-bold text-gray-900 flex-1">Overall</span>
+                <span className="text-sm font-bold text-gray-900 tabular-nums w-14 text-right">
+                  {(overallMean ?? 0).toFixed(2)}<span className="text-xs font-normal text-gray-400"> / 5</span>
+                </span>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${styles.badge} w-32 text-center flex-shrink-0`}>
+                  {label}
+                </span>
+              </div>
             </div>
           </div>
         )}
