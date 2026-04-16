@@ -61,15 +61,6 @@ function ResultsPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto space-y-6">
 
-        {/* ── Result badge ──────────────────────────────────────────── */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-          <p className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-2">Assessment Result</p>
-          <div className={`inline-block px-6 py-3 rounded-full border-2 text-2xl font-bold mb-3 ${styles.badge}`}>
-            {label}
-          </div>
-          <p className="text-gray-600 text-base max-w-xl mx-auto">{description}</p>
-        </div>
-
         {/* ── Radar chart ──────────────────────────────────────────── */}
         {radarPillars.length >= 3 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center">
