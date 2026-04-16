@@ -33,7 +33,7 @@ function StatCard({ label, value, sub, color }) {
 
 // ── Question editor form ─────────────────────────────────────────────────────
 function QuestionForm({ initial, onSave, onCancel, existingCategories = [] }) {
-  const empty = { category: '', question: '', options: [{ text: '', weight: 0 }, { text: '', weight: 5.00 }] };
+  const empty = { category: '', question: '', dimension: '', q_id: '', options: [{ text: '', weight: 0 }, { text: '', weight: 5.00 }] };
   const [form, setForm] = useState(initial || empty);
   // If the initial category isn't in the existing list, treat it as a custom new one
   const [isNewCategory, setIsNewCategory] = useState(
@@ -56,11 +56,31 @@ function QuestionForm({ initial, onSave, onCancel, existingCategories = [] }) {
     }
   };
 
-  const valid = form.category.trim() && form.question.trim() &&
+  const valid = form.category.trim() && form.question.trim() && form.dimension.trim() && form.q_id.trim() &&
     form.options.length >= 2 && form.options.every(o => o.text.trim() && o.weight > 0);
 
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Dimension</label>
+          <input
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            value={form.dimension}
+            onChange={e => setField('dimension', e.target.value)}
+            placeholder="e.g. Use Case Identification"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Question ID</label>
+          <input
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+            value={form.q_id}
+            onChange={e => setField('q_id', e.target.value)}
+            placeholder="e.g. survey_p3_q9_usecase"
+          />
+        </div>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1">Pillar</label>
@@ -699,7 +719,7 @@ function AdminPage() {
                         {editingId === q.id ? (
                           <div className="p-5">
                             <QuestionForm
-                              initial={{ category: q.category, question: q.question, options: q.options.map(o => ({ text: o.text, weight: o.weight })) }}
+                              initial={{ category: q.category, question: q.question, dimension: q.dimension || '', q_id: q.q_id || '', options: q.options.map(o => ({ text: o.text, weight: o.weight })) }}
                               existingCategories={existingCategories}
                               onSave={form => questionAction('update', { id: q.id, ...form })}
                               onCancel={() => setEditingId(null)}

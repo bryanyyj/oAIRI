@@ -40,19 +40,19 @@ export async function onRequestPost(context) {
   try {
     // ── Create ──────────────────────────────────────────────────────────────
     if (action === 'create') {
-      const { category, question, options } = body;
+      const { category, question, dimension, q_id, options } = body;
 
-      if (!category || !question || !Array.isArray(options) || options.length < 2) {
+      if (!category || !question || !dimension || !q_id || !Array.isArray(options) || options.length < 2) {
         return new Response(
-          JSON.stringify({ error: 'category, question, and at least 2 options are required' }),
+          JSON.stringify({ error: 'category, question, dimension, q_id, and at least 2 options are required' }),
           { status: 400, headers: cors }
         );
       }
 
       const { meta } = await env.DB.prepare(
-        `INSERT INTO questions (category, question, order_num)
-         VALUES (?, ?, (SELECT COALESCE(MAX(order_num), 0) + 1 FROM questions))`
-      ).bind(category.trim(), question.trim()).run();
+        `INSERT INTO questions (category, question, dimension, q_id, order_num)
+         VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(order_num), 0) + 1 FROM questions))`
+      ).bind(category.trim(), question.trim(), dimension.trim(), q_id.trim()).run();
 
       const questionId = meta.last_row_id;
       for (const opt of options) {
@@ -67,24 +67,24 @@ export async function onRequestPost(context) {
 
     // ── Update ──────────────────────────────────────────────────────────────
     if (action === 'update') {
-      const { id, category, question, options } = body;
+      const { id, category, question, dimension, q_id, options } = body;
 
-      if (!id || !category || !question || !Array.isArray(options) || options.length < 2) {
+      if (!id || !category || !question || !dimension || !q_id || !Array.isArray(options) || options.length < 2) {
         return new Response(
-          JSON.stringify({ error: 'id, category, question, and at least 2 options are required' }),
+          JSON.stringify({ error: 'id, category, question, dimension, q_id, and at least 2 options are required' }),
           { status: 400, headers: cors }
         );
       }
 
       await env.DB.prepare(
-        'UPDATE questions SET category=?, question=? WHERE id=?'
-      ).bind(category.trim(), question.trim(), id).run();
+        'UPDATE questions SET category=?, question=?, dimension=?, q_id=? WHERE id=?'
+      ).bind(category.trim(), question.trim(), dimension.trim(), q_id.trim(), id).run();
 
       await env.DB.prepare('DELETE FROM question_options WHERE question_id=?').bind(id).run();
       for (const opt of options) {
         await env.DB.prepare(
           'INSERT INTO question_options (question_id, text, weight) VALUES (?, ?, ?)'
-        ).bind(id, opt.text.trim(), parseInt(opt.weight)).run();
+        ).bind(id, opt.text.trim(), parseFloat(opt.weight)).run();
       }
 
       logSecurityEvent('ADMIN_QUESTION_UPDATED', { ip, questionId: id });
