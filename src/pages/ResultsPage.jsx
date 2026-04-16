@@ -67,11 +67,6 @@ function ResultsPage() {
           <div className={`inline-block px-6 py-3 rounded-full border-2 text-2xl font-bold mb-3 ${styles.badge}`}>
             {label}
           </div>
-          {overallMean !== undefined && (
-            <p className={`text-4xl font-bold mb-2 ${styles.icon}`}>
-              {overallMean.toFixed(2)} <span className="text-lg font-normal text-gray-400">/ 5.00</span>
-            </p>
-          )}
           <p className="text-gray-600 text-base max-w-xl mx-auto">{description}</p>
         </div>
 
@@ -105,12 +100,12 @@ function ResultsPage() {
               })}
 
               {/* Overall row */}
-              <div className="border-t border-gray-100 pt-3 flex items-center gap-3">
-                <span className="text-sm font-bold text-gray-900 flex-1">Overall</span>
-                <span className="text-sm font-bold text-gray-900 tabular-nums w-14 text-right">
-                  {(overallMean ?? 0).toFixed(2)}<span className="text-xs font-normal text-gray-400"> / 5</span>
+              <div className={`border-t-2 border-gray-200 mt-2 pt-4 flex items-center gap-3 rounded-lg px-3 py-3 ${styles.badge} bg-opacity-30`}>
+                <span className="text-base font-bold flex-1">Overall Score</span>
+                <span className="text-2xl font-bold tabular-nums">
+                  {(overallMean ?? 0).toFixed(2)}<span className="text-sm font-normal opacity-60"> / 5</span>
                 </span>
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${styles.badge} w-32 text-center flex-shrink-0`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${styles.badge} w-32 text-center flex-shrink-0`}>
                   {label}
                 </span>
               </div>
