@@ -51,9 +51,12 @@ export async function onRequestPost(context) {
 
     if (action === 'update_readiness_levels') {
       const { readinessLevels } = body;
-      if (!Array.isArray(readinessLevels) || readinessLevels.length !== 5 || readinessLevels.some(l => typeof l !== 'string' || !l.trim())) {
+      if (
+        !Array.isArray(readinessLevels) || readinessLevels.length !== 5 ||
+        readinessLevels.some(l => !l?.name?.trim() || !l?.persona?.trim())
+      ) {
         return new Response(
-          JSON.stringify({ error: 'readinessLevels must be an array of exactly 5 non-empty strings' }),
+          JSON.stringify({ error: 'readinessLevels must be an array of exactly 5 objects with non-empty name and persona' }),
           { status: 400, headers: cors }
         );
       }

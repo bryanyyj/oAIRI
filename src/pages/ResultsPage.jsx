@@ -42,7 +42,7 @@ function ResultsPage() {
 
   if (!readinessData) return null;
 
-  const { label, description, color, pillarScores, overallMean } = readinessData;
+  const { label, persona, description, color, pillarScores, overallMean } = readinessData;
   const styles = LEVEL_STYLES[color] || LEVEL_STYLES.yellow;
 
   const pillarEntries = pillarScores ? Object.entries(pillarScores) : [];
@@ -83,7 +83,10 @@ function ResultsPage() {
 
               {/* Overall row */}
               <div className={`border-t-2 border-gray-200 mt-2 pt-4 flex items-center gap-3 rounded-lg px-3 py-3 ${styles.badge} bg-opacity-30`}>
-                <span className="text-base font-bold flex-1">Overall Score</span>
+                <div className="flex-1">
+                  <span className="text-base font-bold block">Overall Score</span>
+                  {persona && <span className={`text-xs font-semibold ${styles.icon}`}>{persona}</span>}
+                </div>
                 <span className="text-2xl font-bold tabular-nums">
                   {(overallMean ?? 0).toFixed(2)}<span className="text-sm font-normal opacity-60"> / 5</span>
                 </span>

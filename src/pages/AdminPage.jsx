@@ -321,7 +321,13 @@ function AdminPage() {
   const {
     stats, scoreBuckets, dailyTrend, responses, questions,
     levels = ['Unaware', 'Aware', 'Ready', 'Competent', 'Catalyst'],
-    readinessLevels = ['Expert Ready', 'Advanced Ready', 'Moderately Ready', 'Developing', 'Novice'],
+    readinessLevels = [
+      { name: 'Expert Ready',     persona: 'Disciplined' },
+      { name: 'Advanced Ready',   persona: 'Crafter'     },
+      { name: 'Moderately Ready', persona: 'Explorer'    },
+      { name: 'Developing',       persona: 'Learner'     },
+      { name: 'Novice',           persona: 'Observer'    },
+    ],
   } = data;
   const total = stats.total_responses || 0;
 
@@ -426,11 +432,11 @@ function AdminPage() {
                 <h2 className="text-lg font-bold text-gray-900 mb-5">Readiness Level Distribution</h2>
                 <div className="space-y-4">
                   {[
-                    { label: readinessLevels[0], count: stats.expert_count,     colors: READINESS_LEVEL_STYLES[0] },
-                    { label: readinessLevels[1], count: stats.advanced_count,   colors: READINESS_LEVEL_STYLES[1] },
-                    { label: readinessLevels[2], count: stats.moderate_count,   colors: READINESS_LEVEL_STYLES[2] },
-                    { label: readinessLevels[3], count: stats.developing_count, colors: READINESS_LEVEL_STYLES[3] },
-                    { label: readinessLevels[4], count: stats.novice_count,     colors: READINESS_LEVEL_STYLES[4] },
+                    { label: readinessLevels[0].name, count: stats.expert_count,     colors: READINESS_LEVEL_STYLES[0] },
+                    { label: readinessLevels[1].name, count: stats.advanced_count,   colors: READINESS_LEVEL_STYLES[1] },
+                    { label: readinessLevels[2].name, count: stats.moderate_count,   colors: READINESS_LEVEL_STYLES[2] },
+                    { label: readinessLevels[3].name, count: stats.developing_count, colors: READINESS_LEVEL_STYLES[3] },
+                    { label: readinessLevels[4].name, count: stats.novice_count,     colors: READINESS_LEVEL_STYLES[4] },
                   ].map(({ label, count, colors }) => {
                     const c = count || 0;
                     const pct = total ? (c / total) * 100 : 0;
@@ -687,7 +693,7 @@ function AdminPage() {
                             <tr key={r.id} className="hover:bg-gray-50 transition-colors">
                               <td className="px-4 py-3 text-sm text-gray-500">{r.id}</td>
                               <td className="px-4 py-3">
-                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${colors.bg} ${colors.text}`}>{readinessLevels[rlIdx]}</span>
+                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${colors.bg} ${colors.text}`}>{readinessLevels[rlIdx].name}</span>
                               </td>
                               <td className="px-4 py-3 text-sm font-semibold text-gray-800">{(r.score_pct || 0).toFixed(2)} / 5</td>
                               <td className="px-4 py-3 text-sm text-gray-500">{new Date(r.submitted_at).toLocaleString()}</td>
@@ -755,7 +761,7 @@ function AdminPage() {
           };
 
           const workingReadiness = editReadinessLevels ?? readinessLevels;
-          const readinessValid = workingReadiness.every(l => l.trim().length > 0);
+          const readinessValid = workingReadiness.every(l => l.name?.trim() && l.persona?.trim());
 
           const saveReadinessLevels = async () => {
             setReadinessSaving(true);
@@ -783,26 +789,37 @@ function AdminPage() {
                   These labels appear on the results page and analytics. Ordered from highest score (≥ 4.0) to lowest (&lt; 1.0).
                 </p>
                 <div className="space-y-3">
-                  {workingReadiness.map((name, i) => (
+                  {workingReadiness.map((lvl, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <span className={`w-8 text-xs font-semibold text-center flex-shrink-0 ${READINESS_LEVEL_STYLES[i].text}`}>
                         {['≥4', '≥3', '≥2', '≥1', '<1'][i]}
                       </span>
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full w-28 text-center flex-shrink-0 ${READINESS_LEVEL_STYLES[i].bg} ${READINESS_LEVEL_STYLES[i].text}`}>
-                        {name || '…'}
-                      </span>
-                      <input
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        value={name}
-                        onChange={e => {
-                          const next = [...workingReadiness];
-                          next[i] = e.target.value;
-                          setEditReadinessLevels(next);
-                        }}
-                        placeholder={`Level ${i + 1} name`}
-                      />
+                      <div className="flex-1 grid grid-cols-2 gap-2">
+                        <input
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          value={lvl.name}
+                          onChange={e => {
+                            const next = workingReadiness.map((l, j) => j === i ? { ...l, name: e.target.value } : l);
+                            setEditReadinessLevels(next);
+                          }}
+                          placeholder="Level name"
+                        />
+                        <input
+                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          value={lvl.persona}
+                          onChange={e => {
+                            const next = workingReadiness.map((l, j) => j === i ? { ...l, persona: e.target.value } : l);
+                            setEditReadinessLevels(next);
+                          }}
+                          placeholder="Persona"
+                        />
+                      </div>
                     </div>
                   ))}
+                  <div className="grid grid-cols-2 gap-2 pl-11">
+                    <p className="text-xs text-gray-400">Level name</p>
+                    <p className="text-xs text-gray-400">Persona</p>
+                  </div>
                 </div>
                 <div className="flex gap-2 mt-5">
                   <button

@@ -26,7 +26,7 @@ CREATE TABLE settings (
 
 INSERT INTO settings (key, value) VALUES
   ('option_levels',     '["Unaware","Aware","Ready","Competent","Catalyst"]'),
-  ('readiness_levels',  '["Expert Ready","Advanced Ready","Moderately Ready","Developing","Novice"]');
+  ('readiness_levels',  '[{"name":"Expert Ready","persona":"Disciplined"},{"name":"Advanced Ready","persona":"Crafter"},{"name":"Moderately Ready","persona":"Explorer"},{"name":"Developing","persona":"Learner"},{"name":"Novice","persona":"Observer"}]');
 
 CREATE TABLE responses (
   id              INTEGER PRIMARY KEY AUTOINCREMENT,

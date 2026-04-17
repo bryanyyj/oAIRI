@@ -1,5 +1,11 @@
-const DEFAULT_READINESS_LEVELS = ['Expert Ready', 'Advanced Ready', 'Moderately Ready', 'Developing', 'Novice'];
-const READINESS_DESCRIPTIONS   = [
+const DEFAULT_READINESS_LEVELS = [
+  { name: 'Expert Ready',     persona: 'Disciplined' },
+  { name: 'Advanced Ready',   persona: 'Crafter'     },
+  { name: 'Moderately Ready', persona: 'Explorer'    },
+  { name: 'Developing',       persona: 'Learner'     },
+  { name: 'Novice',           persona: 'Observer'    },
+];
+const READINESS_DESCRIPTIONS = [
   'Demonstrates exceptional decision-making and readiness across all scenarios',
   'Shows strong readiness with consistent good judgment',
   'Displays adequate readiness with room for development',
@@ -8,10 +14,10 @@ const READINESS_DESCRIPTIONS   = [
 ];
 const READINESS_COLORS = ['emerald', 'green', 'yellow', 'orange', 'red'];
 
-// names: array of 5 labels ordered highest→lowest (index 0 = score≥4, index 4 = score<1)
-function getReadinessLevel(score, names = DEFAULT_READINESS_LEVELS) {
+// levels: array of {name, persona} ordered highest→lowest
+function getReadinessLevel(score, levels = DEFAULT_READINESS_LEVELS) {
   const i = score >= 4 ? 0 : score >= 3 ? 1 : score >= 2 ? 2 : score >= 1 ? 3 : 4;
-  return { label: names[i], description: READINESS_DESCRIPTIONS[i], color: READINESS_COLORS[i] };
+  return { label: levels[i].name, persona: levels[i].persona, description: READINESS_DESCRIPTIONS[i], color: READINESS_COLORS[i] };
 }
 
 export async function onRequestPost(context) {
