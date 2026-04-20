@@ -42,9 +42,9 @@ export async function onRequestPost(context) {
     if (action === 'create') {
       const { category, question, dimension, q_id, options } = body;
 
-      if (!category || !question || !dimension || !q_id || !Array.isArray(options) || options.length < 2) {
+      if (!category || !question || !Array.isArray(options) || options.length < 2) {
         return new Response(
-          JSON.stringify({ error: 'category, question, dimension, q_id, and at least 2 options are required' }),
+          JSON.stringify({ error: 'category, question, and at least 2 options are required' }),
           { status: 400, headers: cors }
         );
       }
@@ -52,7 +52,7 @@ export async function onRequestPost(context) {
       const { meta } = await env.DB.prepare(
         `INSERT INTO questions (category, question, dimension, q_id, order_num)
          VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(order_num), 0) + 1 FROM questions))`
-      ).bind(category.trim(), question.trim(), dimension.trim(), q_id.trim()).run();
+      ).bind(category.trim(), question.trim(), (dimension || '').trim(), (q_id || '').trim()).run();
 
       const questionId = meta.last_row_id;
       for (const opt of options) {
@@ -69,16 +69,16 @@ export async function onRequestPost(context) {
     if (action === 'update') {
       const { id, category, question, dimension, q_id, options } = body;
 
-      if (!id || !category || !question || !dimension || !q_id || !Array.isArray(options) || options.length < 2) {
+      if (!id || !category || !question || !Array.isArray(options) || options.length < 2) {
         return new Response(
-          JSON.stringify({ error: 'id, category, question, dimension, q_id, and at least 2 options are required' }),
+          JSON.stringify({ error: 'id, category, question, and at least 2 options are required' }),
           { status: 400, headers: cors }
         );
       }
 
       await env.DB.prepare(
         'UPDATE questions SET category=?, question=?, dimension=?, q_id=? WHERE id=?'
-      ).bind(category.trim(), question.trim(), dimension.trim(), q_id.trim(), id).run();
+      ).bind(category.trim(), question.trim(), (dimension || '').trim(), (q_id || '').trim(), id).run();
 
       await env.DB.prepare('DELETE FROM question_options WHERE question_id=?').bind(id).run();
       for (const opt of options) {
