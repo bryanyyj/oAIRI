@@ -909,6 +909,28 @@ function AdminPage() {
           const pillarGroups = Array.from(pillarMap.entries()); // [[name, [q,...]], ...]
           const existingCategories = Array.from(pillarMap.keys());
 
+          const reorderPillars = async (newOrder) => {
+            setQSaving(true);
+            try {
+              const res = await fetch('/api/admin/questions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+                body: JSON.stringify({ action: 'reorder_pillars', order: newOrder })
+              });
+              const result = await res.json();
+              if (!result.success) throw new Error(result.error);
+              await fetchData(localStorage.getItem('adminToken'));
+            } catch (err) { alert(`Failed: ${err.message}`); }
+            finally { setQSaving(false); }
+          };
+
+          const movePillar = (idx, direction) => {
+            const newOrder = pillarGroups.map(([name]) => name);
+            const swapIdx = idx + direction;
+            [newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]];
+            reorderPillars(newOrder);
+          };
+
           const openAddForm = (category = '') => {
             setAddFormCategory(category);
             setShowAddForm(true);
@@ -974,7 +996,21 @@ function AdminPage() {
                       <span className="text-xs text-gray-400">{pillarQs.length} question{pillarQs.length !== 1 ? 's' : ''}</span>
                     </div>
                     {!showAddForm && (
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => movePillar(pillarIdx, -1)}
+                            disabled={pillarIdx === 0 || qSaving}
+                            className="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:text-gray-700 hover:border-gray-400 disabled:opacity-25 disabled:cursor-not-allowed text-xs"
+                            title="Move up"
+                          >↑</button>
+                          <button
+                            onClick={() => movePillar(pillarIdx, 1)}
+                            disabled={pillarIdx === pillarGroups.length - 1 || qSaving}
+                            className="w-6 h-6 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:text-gray-700 hover:border-gray-400 disabled:opacity-25 disabled:cursor-not-allowed text-xs"
+                            title="Move down"
+                          >↓</button>
+                        </div>
                         <button
                           onClick={() => openAddForm(pillarName)}
                           className="text-xs text-blue-600 hover:underline font-semibold"

@@ -125,6 +125,27 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ success: true, deleted: qs.length }), { status: 200, headers: cors });
     }
 
+    // ── Reorder pillars ─────────────────────────────────────────────────────
+    if (action === 'reorder_pillars') {
+      const { order } = body; // array of category names in desired order
+      if (!Array.isArray(order) || order.length === 0) {
+        return new Response(JSON.stringify({ error: 'order must be a non-empty array of category names' }), { status: 400, headers: cors });
+      }
+
+      for (let pi = 0; pi < order.length; pi++) {
+        const { results: qs } = await env.DB.prepare(
+          'SELECT id FROM questions WHERE category=? ORDER BY order_num ASC, id ASC'
+        ).bind(order[pi]).all();
+        for (let qi = 0; qi < qs.length; qi++) {
+          await env.DB.prepare('UPDATE questions SET order_num=? WHERE id=?')
+            .bind(pi * 1000 + qi, qs[qi].id).run();
+        }
+      }
+
+      logSecurityEvent('ADMIN_PILLARS_REORDERED', { ip, count: order.length });
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: cors });
+    }
+
     return new Response(
       JSON.stringify({ error: `Unknown action: ${action}` }),
       { status: 400, headers: cors }
