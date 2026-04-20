@@ -41,8 +41,11 @@ function StatCard({ label, value, sub, color }) {
 }
 
 // ── Question editor form ─────────────────────────────────────────────────────
+const DEFAULT_WEIGHTS = [0, 1.25, 2.50, 3.75, 5.00];
+const DEFAULT_OPTIONS = DEFAULT_WEIGHTS.map(w => ({ text: '', weight: w }));
+
 function QuestionForm({ initial, onSave, onCancel, existingCategories = [], levels = [] }) {
-  const empty = { category: '', question: '', dimension: '', q_id: '', options: [{ text: '', weight: 0 }, { text: '', weight: 5.00 }] };
+  const empty = { category: '', question: '', dimension: '', q_id: '', options: DEFAULT_OPTIONS };
   const [form, setForm] = useState(initial || empty);
   // If the initial category isn't in the existing list, treat it as a custom new one
   const [isNewCategory, setIsNewCategory] = useState(
@@ -52,7 +55,10 @@ function QuestionForm({ initial, onSave, onCancel, existingCategories = [], leve
   const setField = (field, value) => setForm(f => ({ ...f, [field]: value }));
   const setOption = (i, field, value) =>
     setForm(f => ({ ...f, options: f.options.map((o, idx) => idx === i ? { ...o, [field]: value } : o) }));
-  const addOption = () => setForm(f => ({ ...f, options: [...f.options, { text: '', weight: 1.00 }] }));
+  const addOption = () => setForm(f => {
+    const nextWeight = DEFAULT_WEIGHTS[f.options.length] ?? 5.00;
+    return { ...f, options: [...f.options, { text: '', weight: nextWeight }] };
+  });
   const removeOption = (i) => setForm(f => ({ ...f, options: f.options.filter((_, idx) => idx !== i) }));
 
   const handleCategorySelect = (val) => {
@@ -924,12 +930,11 @@ function AdminPage() {
                 </div>
               )}
 
-              {/* Add form (global or pre-filled) */}
-              {showAddForm && (
+              {/* Global add form (no specific pillar) */}
+              {showAddForm && !addFormCategory && (
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-200">
                   <h3 className="text-base font-bold text-gray-900 mb-4">New Question</h3>
                   <QuestionForm
-                    initial={addFormCategory ? { category: addFormCategory, question: '', options: [{ text: '', weight: 0 }, { text: '', weight: 5.00 }] } : undefined}
                     existingCategories={existingCategories}
                     onSave={form => questionAction('create', form)}
                     onCancel={closeAddForm}
@@ -944,7 +949,21 @@ function AdminPage() {
 
               {/* Pillar sections */}
               {pillarGroups.map(([pillarName, pillarQs], pillarIdx) => (
-                <div key={pillarName} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div key={pillarName}>
+                  {/* Pillar-specific add form renders above this pillar */}
+                  {showAddForm && addFormCategory === pillarName && (
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-200 mb-4">
+                      <h3 className="text-base font-bold text-gray-900 mb-4">New Question — {pillarName}</h3>
+                      <QuestionForm
+                        initial={{ category: pillarName, question: '', dimension: '', q_id: '', options: DEFAULT_OPTIONS }}
+                        existingCategories={existingCategories}
+                        onSave={form => questionAction('create', form)}
+                        onCancel={closeAddForm}
+                        levels={levels}
+                      />
+                    </div>
+                  )}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                   {/* Pillar header */}
                   <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-100">
                     <div className="flex items-center gap-3">
@@ -1030,6 +1049,7 @@ function AdminPage() {
                       </div>
                     ))}
                   </div>
+                </div>
                 </div>
               ))}
             </div>
