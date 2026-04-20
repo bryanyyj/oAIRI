@@ -45,11 +45,14 @@ export async function onRequestPost(context) {
       );
     }
 
-    // Load readiness level names from settings
-    const rlRow = await env.DB.prepare(
-      "SELECT value FROM settings WHERE key = 'readiness_levels'"
-    ).first();
-    const readinessLevelNames = rlRow ? JSON.parse(rlRow.value) : DEFAULT_READINESS_LEVELS;
+    // Load readiness level names from settings (fall back to defaults if table missing)
+    let readinessLevelNames = DEFAULT_READINESS_LEVELS;
+    try {
+      const rlRow = await env.DB.prepare(
+        "SELECT value FROM settings WHERE key = 'readiness_levels'"
+      ).first();
+      if (rlRow?.value) readinessLevelNames = JSON.parse(rlRow.value);
+    } catch {}
 
     // Fetch questions + options
     const { results: questions } = await env.DB.prepare(
